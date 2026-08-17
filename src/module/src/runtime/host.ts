@@ -13,7 +13,8 @@ import { collections } from '#content/preview'
 import { publicAssetsStorage, externalAssetsStorage } from '#build/studio-assets'
 import { useHostMeta } from './composables/useMeta'
 import { assignComponentsToGroups } from './utils/componentGroups'
-import { generateIdFromFsPath as generateMediaIdFromFsPath } from './utils/media'
+import { generateIdFromFsPath as generateMediaIdFromFsPath, mediaItemFieldsFromKey } from './utils/media'
+import { VIRTUAL_MEDIA_COLLECTION_NAME } from './utils/constants'
 import { getCollectionSourceById } from './utils/source'
 import { kebabCase } from 'scule'
 
@@ -318,13 +319,13 @@ export function useStudioHost(user: StudioUser, repository: Repository): StudioH
           return await getStorage().getItem(generateMediaIdFromFsPath(fsPath)) as MediaItem
         },
         list: async (): Promise<MediaItem[]> => {
-          const storage = getStorage()
-          const items = await Promise.all(
-            await storage.getKeys().then((keys: string[]) =>
-              keys.map((key: string) => storage.getItem(key)),
-            ),
-          )
-          return items.filter(Boolean) as MediaItem[]
+          const keys = await getStorage().getKeys()
+          // production's pre-baked storage keys carry the collection prefix; dev/external keys don't
+          const collectionPrefix = new RegExp(`^${VIRTUAL_MEDIA_COLLECTION_NAME}:`)
+          return keys.map((key: string): MediaItem => {
+            const rawKey = key.replace(collectionPrefix, '')
+            return mediaItemFieldsFromKey(rawKey)
+          })
         },
         upsert: async (fsPath: string, media: MediaItem) => {
           const id = generateMediaIdFromFsPath(fsPath)
