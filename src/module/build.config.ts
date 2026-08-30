@@ -2,7 +2,7 @@ import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
   outDir: '../../dist/module',
-  externals: [
+  externals: ['nuxt-studio/app', 'nuxt-studio/app/utils', 
     'ufo',
     'defu',
     'destr',
