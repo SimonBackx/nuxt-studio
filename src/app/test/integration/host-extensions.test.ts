@@ -71,9 +71,10 @@ function createHostEditor(json: JSONContent): Editor {
 }
 
 describe('host editor extensions', () => {
+  const galleryHost = { meta: { dev: false, editor: { extensions: { get: () => [galleryFactory] } } } } as unknown as StudioHost
+
   beforeAll(() => {
-    const host = { meta: { dev: false, editor: { extensions: { get: () => [galleryFactory] } } } } as unknown as StudioHost
-    resolveHostExtensions(host, key => key)
+    resolveHostExtensions(galleryHost, key => key)
   })
 
   test('factory is resolved with Studio context and exposes handler + mdc mapping', () => {
@@ -128,7 +129,51 @@ describe('host editor extensions', () => {
     expect(outputContent).toBe(`${inputContent}\n`)
   })
 
+  test('a host node can serialise object props → YAML block inside the component', async () => {
+    const propFormFactory: StudioEditorExtensionFactory = ({ tiptap, comark }) => ({
+      extension: tiptap.Node.create({
+        name: 'gallery',
+        group: 'block',
+        atom: true,
+        addAttributes: () => ({ images: { default: [] }, caption: { default: '' } }),
+        parseHTML: () => [{ tag: 'div[data-type="gallery"]' }],
+        renderHTML: ({ HTMLAttributes }) => ['div', tiptap.mergeAttributes(HTMLAttributes, { 'data-type': 'gallery' })],
+      }),
+      mdc: {
+        tags: ['gallery'],
+        toTiptap: node => ({ type: 'gallery', attrs: { images: comark.getAttrs(node).images ?? [], caption: comark.getAttrs(node).caption ?? '' } }),
+        toComark: node => ['gallery', { caption: node.attrs?.caption, images: node.attrs?.images }] as never,
+      },
+    })
+    const host = { meta: { dev: false, editor: { extensions: { get: () => [propFormFactory] } } } } as unknown as StudioHost
+    resolveHostExtensions(host, key => key)
+
+    const inputContent = [
+      '::gallery',
+      '---',
+      'caption: During the works',
+      'images:',
+      '  - src: /images/a.jpg',
+      '    alt: Site',
+      '    width: 2000',
+      '    height: 1500',
+      '---',
+      '::',
+    ].join('\n')
+
+    const document = await documentFromContent('test.md', inputContent) as DatabasePageItem
+    const tiptapJSON = comarkToTiptap(document.body)
+    expect(tiptapJSON.content?.[1]).toMatchObject({ type: 'gallery', attrs: { caption: 'During the works', images: [{ src: '/images/a.jpg', alt: 'Site', width: 2000, height: 1500 }] } })
+
+    const editor = createHostEditor(tiptapJSON)
+    const rtComarkTree = await tiptapToComark(editor.getJSON())
+    editor.destroy()
+    const generatedDocument = createMockDocument('docs/test.md', { body: rtComarkTree, ...rtComarkTree.frontmatter })
+    expect(await contentFromDocument(generatedDocument)).toBe(`${inputContent}\n`)
+  })
+
   test('handler inserts the custom node instead of a generic element', () => {
+    resolveHostExtensions(galleryHost, key => key) // re-register after the prop-form test swapped the host
     const editor = createHostEditor({ type: 'doc', content: [{ type: 'paragraph', content: [] }] })
     getHostHandlers()[0]!.insert(editor)
     expect(editor.getJSON().content?.some(n => n.type === 'gallery')).toBe(true)
