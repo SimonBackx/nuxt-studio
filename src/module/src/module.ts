@@ -8,7 +8,7 @@ import { validateAuthConfig } from './auth'
 import { setExternalMediaStorage, setDefaultMediaStorage } from './medias'
 import { setAIFeature } from './ai'
 import type { CommandConfig } from '../../app/src/types/editor'
-import type { StudioEditorExtensionFactory } from '../../app/src/types/editor-extensions'
+import type { StudioEditorExtensionFactory } from 'nuxt-studio/app/utils'
 
 const logger = useLogger('nuxt-studio')
 
