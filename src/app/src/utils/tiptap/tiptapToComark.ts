@@ -6,6 +6,7 @@ import { getEmojiUnicode } from '../emoji'
 import { buildAttrs, cleanSpanProps, normalizeProps } from './props'
 import type { EditorState } from '@tiptap/pm/state'
 import { highlightCodeBlocks } from 'comark/plugins/highlight'
+import { findHostMdcByNodeType } from './host-extensions'
 
 type TiptapToComarkMap = Record<string, (node: JSONContent) => ComarkNode | ComarkNode[]>
 
@@ -135,6 +136,11 @@ export function tiptapNodeToComark(node: JSONContent): ComarkNode | ComarkNode[]
   // New list items create an undefined node, so we need to handle it
   if (!node) {
     return ['p', {}] as ComarkElement
+  }
+
+  const hostMapping = findHostMdcByNodeType(node.type)
+  if (hostMapping) {
+    return hostMapping.toComark(node, { childrenToComark: comarkNodesFromTiptap })
   }
 
   if (tiptapToComarkMap[node.type!]) {

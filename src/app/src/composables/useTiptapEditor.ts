@@ -15,6 +15,7 @@ import {
 } from '../utils/tiptap/editor'
 import { imageHandler, videoHandler, calloutHandler, componentHandler, tableHandler, CALLOUT_TYPES, pickInitialSlot } from '../utils/tiptap/handlers'
 import { useStudio } from './useStudio'
+import { resolveHostExtensions, getHostHandlers } from '../utils/tiptap/host-extensions'
 
 const NATIVE_OVERRIDE_COMPONENTS = new Set(['table'])
 
@@ -24,6 +25,11 @@ const NATIVE_OVERRIDE_COMPONENTS = new Set(['table'])
 export function useTiptapEditor() {
   const { t } = useI18n()
   const { host } = useStudio()
+
+  // Host-provided extensions (custom node views for MDC components)
+  resolveHostExtensions(host, t as (key: string, ...args: unknown[]) => string)
+  const hostHandlers = getHostHandlers()
+  const hostHandlerByKind = new Map(hostHandlers.map(handler => [handler.kind, handler]))
 
   // Selected node for drag handle
   const selectedNode = ref<JSONContent | null>(null)
@@ -37,10 +43,20 @@ export function useTiptapEditor() {
       .map(component => ({
         kind: component.name,
         type: undefined as never,
-        label: titleCase(component.name),
-        icon: standardNuxtUIComponents[component.name]?.icon || 'i-lucide-box',
+        label: hostHandlerByKind.get(component.name)?.label || titleCase(component.name),
+        icon: hostHandlerByKind.get(component.name)?.icon || standardNuxtUIComponents[component.name]?.icon || 'i-lucide-box',
         slots: component.meta.slots,
       }))
+      // Host handlers whose kind is not a discovered component still get a menu entry
+      .concat(hostHandlers
+        .filter(handler => !host.meta.editor.components.get().some(component => component.name === handler.kind))
+        .map(handler => ({
+          kind: handler.kind,
+          type: undefined as never,
+          label: handler.label || titleCase(handler.kind),
+          icon: handler.icon || 'i-lucide-box',
+          slots: [],
+        })))
   })
 
   /**
@@ -58,6 +74,13 @@ export function useTiptapEditor() {
           : componentHandler(item.kind, pickInitialSlot(item.slots)),
       ]),
     ),
+    // Host extensions override the generic component block for their kind
+    ...Object.fromEntries(hostHandlers.map(handler => [handler.kind, {
+      canExecute: () => true,
+      execute: (editor: Editor) => handler.insert(editor),
+      isActive: (editor: Editor) => handler.isActive?.(editor) ?? editor.isActive(handler.kind),
+      isDisabled: undefined,
+    }])),
   }) satisfies EditorCustomHandlers)
 
   /**

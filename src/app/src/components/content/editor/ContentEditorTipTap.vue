@@ -11,6 +11,7 @@ import { tiptapToComark } from '../../../utils/tiptap/tiptapToComark'
 import { removeLastEmptyParagraph } from '../../../utils/tiptap/editor'
 import { pickInitialSlot } from '../../../utils/tiptap/handlers'
 import { studioStarterKitOptions, createStudioExtensions } from '../../../utils/tiptap/studio-extensions'
+import { getHostTiptapExtensions } from '../../../utils/tiptap/host-extensions'
 import TiptapSpanStylePopover from '../../tiptap/TiptapSpanStylePopover.vue'
 import TiptapTableGrips from '../../tiptap/TiptapTableGrips.vue'
 import { useTiptapEditor } from '../../../composables/useTiptapEditor'
@@ -159,7 +160,7 @@ watch(() => `${document.value?.id}-${props.draftItem.version}-${props.draftItem.
         placeholder: $t('studio.tiptap.editor.placeholder'),
         hasNuxtUI,
         resolveInitialSlot: tag => pickInitialSlot(host.meta.editor.components.get().find(c => c.name === tag)?.meta.slots),
-        additionalExtensions: aiExtensions,
+        additionalExtensions: [...aiExtensions, ...getHostTiptapExtensions()],
       })"
     >
       <UEditorToolbar

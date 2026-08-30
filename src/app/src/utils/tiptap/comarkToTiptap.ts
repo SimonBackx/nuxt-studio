@@ -5,6 +5,7 @@ import { EMOJI_REGEXP, getEmojiUnicode } from '../emoji'
 import { isValidAttr, stripBindingPrefix } from './props'
 import { isElement, isComment, getTag, getAttrs, getChildren } from '../comark'
 import { sameMark, type MarkInfo } from './tiptapToComark'
+import { findHostMdcByTag } from './host-extensions'
 
 type ComarkToTipTapMap = Record<string, (node: ComarkElement) => JSONContent | JSONContent[]>
 
@@ -115,6 +116,16 @@ export function comarkNodeToTiptap(node: ComarkNode, parentTag?: string, hasNuxt
    */
   if (comarkToTiptapMap[tagStr]) {
     return comarkToTiptapMap[tagStr](node as ComarkElement)
+  }
+
+  /**
+   * Components with a host-provided editor extension (custom node + node view)
+   */
+  const hostMapping = findHostMdcByTag(tagStr)
+  if (hostMapping) {
+    return hostMapping.toTiptap(node as ComarkElement, {
+      childrenToTiptap: children => children.flatMap(child => comarkNodeToTiptap(child, tagStr, hasNuxtUI)) as JSONContent[],
+    })
   }
 
   /**

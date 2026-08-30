@@ -40,3 +40,15 @@ declare module 'nitropack' {
     'studio:auth:logout': (payload: { user: StudioUser, event: H3Event }) => void
   }
 }
+
+declare module '#app' {
+  import type { StudioEditorExtensionFactory } from 'nuxt-studio/app'
+
+  interface RuntimeNuxtHooks {
+    /**
+     * Register custom TipTap extensions for the Studio visual editor.
+     * Called once, right before Studio is mounted.
+     */
+    'studio:editor:extensions': (register: (factory: StudioEditorExtensionFactory) => void) => void | Promise<void>
+  }
+}

@@ -5,7 +5,7 @@ import type { ContentDatabaseAdapter } from '../types/content'
 import { getCollectionByFilePath, generateIdFromFsPath, generateRecordDeletion, generateRecordInsert, generateFsPathFromId, getCollectionById } from './utils/collection'
 import { applyCollectionSchema, isDocumentMatchingContent, documentFromContent, contentFromDocument, areDocumentsEqual, pickReservedKeysFromDocument, cleanDataKeys, sanitizeDocumentTree, markdownRootFromComarkTree, isComarkTree, ensureComarkBody } from './utils/document'
 import { getHostStyles, getSidebarWidth, adjustFixedElements } from './utils/sidebar'
-import type { StudioHost, StudioUser, DatabaseItem, MediaItem, Repository } from 'nuxt-studio/app'
+import type { StudioHost, StudioUser, DatabaseItem, MediaItem, Repository, StudioEditorExtensionFactory } from 'nuxt-studio/app'
 import type { RouteLocationNormalized, Router } from 'vue-router'
 // @ts-expect-error queryCollection is not defined in .nuxt/imports.d.ts
 import { clearError, getAppManifest, queryCollection, queryCollectionItemSurroundings, queryCollectionNavigation, queryCollectionSearchSections, useRuntimeConfig } from '#imports'
@@ -24,7 +24,7 @@ function getLocalColorMode(): 'light' | 'dark' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
 }
 
-export function useStudioHost(user: StudioUser, repository: Repository): StudioHost {
+export function useStudioHost(user: StudioUser, repository: Repository, editorExtensions: StudioEditorExtensionFactory[] = []): StudioHost {
   let localDatabaseAdapter: ContentDatabaseAdapter | null = null
   let colorMode = getLocalColorMode()
 
@@ -105,6 +105,7 @@ export function useStudioHost(user: StudioUser, repository: Repository): StudioH
         },
         commands: studioConfig.commands ?? { exclude: [] },
         iconLibraries: studioConfig.iconLibraries,
+        extensions: { get: () => editorExtensions },
         get highlightTheme() { return meta.highlightTheme.value! },
         get markdown() { return meta.markdownConfig.value },
       },

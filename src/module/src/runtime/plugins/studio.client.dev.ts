@@ -1,11 +1,11 @@
 import { defineNuxtPlugin, useRuntimeConfig } from '#imports'
 import { consola } from 'consola'
 import { defineStudioActivationPlugin } from '../utils/activation'
-import type { Repository, UseStudioHost } from 'nuxt-studio/app'
+import type { Repository, UseStudioHost, StudioEditorExtensionFactory } from 'nuxt-studio/app'
 
 const logger = consola.withTag('Nuxt Studio')
 
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin((nuxtApp) => {
   defineStudioActivationPlugin(async (user) => {
     const config = useRuntimeConfig()
     logger.info(`
@@ -19,7 +19,10 @@ export default defineNuxtPlugin(() => {
 
     // Initialize host
     const host = await import('../host.dev').then(m => m.useStudioHost)
-    const hostInstance = host(user, config.public.studio.repository as Repository);
+    // Let the host app register custom editor extensions (see StudioEditorExtensionFactory)
+    const editorExtensions: StudioEditorExtensionFactory[] = []
+    await nuxtApp.callHook('studio:editor:extensions', (factory: StudioEditorExtensionFactory) => { editorExtensions.push(factory) })
+    const hostInstance = host(user, config.public.studio.repository as Repository, editorExtensions);
     (window as unknown as { useStudioHost: UseStudioHost }).useStudioHost = () => hostInstance
 
     const el = document.createElement('script')

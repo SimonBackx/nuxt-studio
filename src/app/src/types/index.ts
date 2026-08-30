@@ -5,6 +5,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 import type { MediaItem, MediaConfig } from './media'
 import type { Repository } from './git'
 import type { ComponentMeta, CommandConfig } from './editor'
+import type { StudioEditorExtensionFactory } from './editor-extensions'
 import type { MarkdownParsingOptions, SyntaxHighlightTheme } from './content'
 import type { CollectionInfo } from '@nuxt/content'
 
@@ -17,6 +18,7 @@ export * from './tree'
 export * from './git'
 export * from './context'
 export * from './editor'
+export * from './editor-extensions'
 export * from './config'
 export * from './media'
 export * from './content'
@@ -49,6 +51,8 @@ export interface StudioHost {
       }
       commands: CommandConfig
       iconLibraries?: string[]
+      /** Custom TipTap extensions registered by the host app (see StudioEditorExtensionFactory) */
+      extensions?: { get: () => StudioEditorExtensionFactory[] }
       highlightTheme: SyntaxHighlightTheme
       markdown?: { contentHeading?: boolean }
     }

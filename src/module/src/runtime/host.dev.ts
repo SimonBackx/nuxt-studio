@@ -1,5 +1,5 @@
 import { useStudioHost as useStudioHostBase } from './host'
-import type { StudioUser, DatabaseItem, Repository } from 'nuxt-studio/app'
+import type { StudioUser, DatabaseItem, Repository, StudioEditorExtensionFactory } from 'nuxt-studio/app'
 import { getCollectionByFilePath, generateIdFromFsPath, generateFsPathFromId, getCollectionById } from './utils/collection'
 import { applyCollectionSchema, sanitizeDocumentTree } from './utils/document'
 import { createStorage } from 'unstorage'
@@ -9,8 +9,8 @@ import { collections } from '#content/preview'
 import { debounce } from 'perfect-debounce'
 import { getCollectionSourceById } from './utils/source'
 
-export function useStudioHost(user: StudioUser, repository: Repository) {
-  const host = useStudioHostBase(user, repository)
+export function useStudioHost(user: StudioUser, repository: Repository, editorExtensions: StudioEditorExtensionFactory[] = []) {
+  const host = useStudioHostBase(user, repository, editorExtensions)
 
   if (!useRuntimeConfig().public.studio.dev) {
     return host
