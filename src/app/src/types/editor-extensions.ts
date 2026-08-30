@@ -8,30 +8,22 @@
 // Studio's instances through `StudioEditorExtensionContext` and builds the extension with them.
 
 import type { AnyExtension, Editor, JSONContent } from '@tiptap/core'
+import type * as TiptapCore from '@tiptap/core'
+import type * as TiptapVue from '@tiptap/vue-3'
+import type * as Vue from 'vue'
 import type { ComarkElement, ComarkNode } from 'comark'
 
 export interface StudioEditorExtensionContext {
   /** `@tiptap/core` primitives from Studio's bundle */
-  tiptap: {
-    Node: typeof import('@tiptap/core').Node
-    Mark: typeof import('@tiptap/core').Mark
-    Extension: typeof import('@tiptap/core').Extension
-    mergeAttributes: typeof import('@tiptap/core').mergeAttributes
-    InputRule: typeof import('@tiptap/core').InputRule
-  }
+  tiptap: Pick<typeof TiptapCore, 'Node' | 'Mark' | 'Extension' | 'mergeAttributes' | 'InputRule'>
   /** `@tiptap/vue-3` node-view helpers from Studio's bundle */
-  tiptapVue: {
-    VueNodeViewRenderer: typeof import('@tiptap/vue-3').VueNodeViewRenderer
-    NodeViewWrapper: typeof import('@tiptap/vue-3').NodeViewWrapper
-    NodeViewContent: typeof import('@tiptap/vue-3').NodeViewContent
-    nodeViewProps: typeof import('@tiptap/vue-3').nodeViewProps
-  }
+  tiptapVue: Pick<typeof TiptapVue, 'VueNodeViewRenderer' | 'NodeViewWrapper' | 'NodeViewContent' | 'nodeViewProps'>
   /** Studio's Vue runtime — build node-view components with these, not with the host's Vue */
-  vue: Pick<typeof import('vue'), 'h' | 'defineComponent' | 'ref' | 'computed' | 'reactive' | 'watch' | 'onMounted' | 'onBeforeUnmount' | 'resolveComponent' | 'withModifiers' | 'Fragment'>
+  vue: Pick<typeof Vue, 'h' | 'defineComponent' | 'ref' | 'computed' | 'reactive' | 'watch' | 'onMounted' | 'onBeforeUnmount' | 'resolveComponent' | 'withModifiers' | 'Fragment'>
   /** Studio components that are useful inside node views (media library modal, props form) */
   components: {
-    ModalMediaPicker: import('vue').Component
-    TiptapComponentProps: import('vue').Component
+    ModalMediaPicker: Vue.Component
+    TiptapComponentProps: Vue.Component
   }
   /** Comark (MDC AST) helpers */
   comark: {
