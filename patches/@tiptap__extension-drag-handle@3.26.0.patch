@@ -1,0 +1,52 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 0ae2688d6df6fcb9c53fac5a8386dcbbb9fde92f..372d982da1c0da0d68d47edbd37cf16569de2af0 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -252,12 +252,16 @@ function findBestDragTarget(view, coords, options) {
+     const dom = view.nodeDOM(nodePos);
+     return { node, pos: nodePos, depth, score, dom };
+   }).filter((candidate) => candidate !== null);
+-  const nodeAfter = $pos.nodeAfter;
++  // A block atom rendered by a large node view: posAtCoords resolves `pos` to before OR after the
++  // node depending on the hovered inner element, but `inside` reliably points at the node itself.
++  const insideNode = posInfo.inside >= 0 ? doc.nodeAt(posInfo.inside) : null;
++  const nodeAfter = insideNode && insideNode.isAtom && !insideNode.isInline ? insideNode : $pos.nodeAfter;
+   if (nodeAfter && nodeAfter.isAtom && !nodeAfter.isInline) {
+-    const nodePos = posInfo.pos;
+-    const depth = $pos.depth + 1;
+-    const parent = $pos.parent;
+-    const index = $pos.index();
++    const nodePos = nodeAfter === insideNode ? posInfo.inside : posInfo.pos;
++    const $nodePos = doc.resolve(nodePos);
++    const depth = $nodePos.depth + 1;
++    const parent = $nodePos.parent;
++    const index = $nodePos.index();
+     const siblingCount = parent.childCount;
+     let inAllowedContainer = true;
+     if (options.allowedContainers) {
+diff --git a/dist/index.js b/dist/index.js
+index 8614ae71c4b123f68f06a1a1631856462c358e47..f5d0d9f0b86f6bdd25ec2da7ba30ef96f29e37f0 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -224,12 +224,16 @@ function findBestDragTarget(view, coords, options) {
+     const dom = view.nodeDOM(nodePos);
+     return { node, pos: nodePos, depth, score, dom };
+   }).filter((candidate) => candidate !== null);
+-  const nodeAfter = $pos.nodeAfter;
++  // A block atom rendered by a large node view: posAtCoords resolves `pos` to before OR after the
++  // node depending on the hovered inner element, but `inside` reliably points at the node itself.
++  const insideNode = posInfo.inside >= 0 ? doc.nodeAt(posInfo.inside) : null;
++  const nodeAfter = insideNode && insideNode.isAtom && !insideNode.isInline ? insideNode : $pos.nodeAfter;
+   if (nodeAfter && nodeAfter.isAtom && !nodeAfter.isInline) {
+-    const nodePos = posInfo.pos;
+-    const depth = $pos.depth + 1;
+-    const parent = $pos.parent;
+-    const index = $pos.index();
++    const nodePos = nodeAfter === insideNode ? posInfo.inside : posInfo.pos;
++    const $nodePos = doc.resolve(nodePos);
++    const depth = $nodePos.depth + 1;
++    const parent = $nodePos.parent;
++    const index = $nodePos.index();
+     const siblingCount = parent.childCount;
+     let inAllowedContainer = true;
+     if (options.allowedContainers) {
