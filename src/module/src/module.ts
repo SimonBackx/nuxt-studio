@@ -8,6 +8,7 @@ import { validateAuthConfig } from './auth'
 import { setExternalMediaStorage, setDefaultMediaStorage } from './medias'
 import { setAIFeature } from './ai'
 import type { CommandConfig } from '../../app/src/types/editor'
+import type { StudioEditorExtensionFactory } from '../../app/src/types/editor-extensions'
 
 const logger = useLogger('nuxt-studio')
 
@@ -725,3 +726,13 @@ export default defineNuxtModule<ModuleOptions>({
   },
 })
 
+declare module '#app' {
+  interface RuntimeNuxtHooks {
+    /**
+     * Register custom TipTap extensions for the Studio visual editor.
+     * Called once on the client, right before Studio is mounted.
+     * @example nuxtApp.hook('studio:editor:extensions', register => register(myExtensionFactory))
+     */
+    'studio:editor:extensions': (register: (factory: StudioEditorExtensionFactory) => void) => void | Promise<void>
+  }
+}
